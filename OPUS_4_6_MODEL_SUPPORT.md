@@ -2,7 +2,8 @@
 
 ## Problem
 
-Claude Opus 4.6 modeli, Google Antigravity IDE (VS Code fork) uzerindeki Claude eklentisinde gorunmuyor.
+Claude Opus 4.6 modeli, Google Antigravity IDE (VS Code fork) uzerindeki Claude eklentisinde
+gorunmuyor. Eklenti baslatildiginda `Error: spawn ENOEXEC` hatasi aliyor.
 
 ## Neden Gorunmuyor?
 
@@ -31,7 +32,71 @@ tum ozelliklerini desteklememektedir. Bilinen uyumluluk sorunlari:
 - Sidebar ikonlari kaybolabiliyor
 - Bazi extension API'lari tam desteklenmiyor
 
-### 4. API Erisim / Abonelik Planini Kontrol Edin
+### 4. spawn ENOEXEC Hatasi (Native Binary Sorunu)
+
+Bu hata, eklentinin icinde gelen native binary dosyasinin calistirilamadigi anlamina gelir.
+Eklenti Claude Code'u baslatmak icin su yolu kullaniyor:
+
+```
+~/.antigravity/extensions/anthropic.claude-code-<version>/resources/native-binary/claude
+```
+
+**ENOEXEC** (Exec format error) su sebeplerden olusur:
+
+#### a) Mimari Uyumsuzlugu (En Yaygin Neden)
+
+Mac'iniz Apple Silicon (M1/M2/M3/M4) ise binary Intel (x86_64) icin derlenmis olabilir,
+ya da tam tersi. Kontrol icin:
+
+```bash
+# Binary'nin mimarisini kontrol edin
+file ~/.antigravity/extensions/anthropic.claude-code-2.1.34/resources/native-binary/claude
+
+# Mac'inizin mimarisini kontrol edin
+uname -m
+```
+
+Beklenen ciktilar:
+- Apple Silicon Mac: `uname -m` → `arm64`, binary → `Mach-O 64-bit executable arm64`
+- Intel Mac: `uname -m` → `x86_64`, binary → `Mach-O 64-bit executable x86_64`
+
+Eger bunlar uyusmuyorsa, sorun budur.
+
+#### b) Execute Izni Eksik
+
+Binary dosyasinin calistirma izni olmayabilir:
+
+```bash
+chmod +x ~/.antigravity/extensions/anthropic.claude-code-2.1.34/resources/native-binary/claude
+```
+
+#### c) Binary Bozuk veya Eksik Indirilmis
+
+Eklenti marketinden indirme sirasinda dosya bozulmus olabilir. Eklentiyi kaldirip
+yeniden yuklemek sorunu cozebilir.
+
+#### d) Cozum: Sistem Genelindeki Claude CLI'a Yonlendirme
+
+Eger binary uyumsuzsa, Claude Code CLI'i ayri kurup eklentiyi ona yonlendirebilirsiniz:
+
+```bash
+# Claude Code CLI kurulumu (dogru mimari icin otomatik indirir)
+npm install -g @anthropic-ai/claude-code
+
+# Kurulum yolunu bulun
+which claude
+# Cikti: /opt/homebrew/bin/claude (Apple Silicon) veya /usr/local/bin/claude (Intel)
+```
+
+Antigravity `settings.json` dosyasina ekleyin:
+
+```json
+{
+  "claude-code.executablePath": "/opt/homebrew/bin/claude"
+}
+```
+
+### 5. API Erisim / Abonelik Planini Kontrol Edin
 
 Opus 4.6'ya erisim icin uygun bir plana sahip olmaniz gerekir:
 - **Claude Pro/Max** aboneligi (claude.ai uzerinden)
