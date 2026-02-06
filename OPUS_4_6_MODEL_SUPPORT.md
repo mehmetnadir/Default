@@ -43,24 +43,35 @@ Eklenti Claude Code'u baslatmak icin su yolu kullaniyor:
 
 **ENOEXEC** (Exec format error) su sebeplerden olusur:
 
-#### a) Mimari Uyumsuzlugu (En Yaygin Neden)
+#### a) Yanlis Platform Binary'si (Dogrulanmis Neden)
 
-Mac'iniz Apple Silicon (M1/M2/M3/M4) ise binary Intel (x86_64) icin derlenmis olabilir,
-ya da tam tersi. Kontrol icin:
+Antigravity marketplace'i macOS icin **yanlis platform binary'si** dagitabiliyor.
+Dogrulanan ornekte, macOS Apple Silicon (arm64) uzerinde binary su sekilde tespit edildi:
+
+```
+ELF 64-bit LSB executable, ARM aarch64, version 1 (SYSV),
+dynamically linked, interpreter /lib/ld-musl-aarch64.so.1
+```
+
+Bu bir **Linux Alpine ARM64** binary'sidir. macOS'un bekledigin format ise **Mach-O**'dur.
+Mimari (ARM64) dogru olmasina ragmen, dosya formati (ELF vs Mach-O) uyumsuz oldugu
+icin `ENOEXEC` hatasi olusur.
+
+Kontrol icin:
 
 ```bash
-# Binary'nin mimarisini kontrol edin
+# Binary'nin formatini kontrol edin
 file ~/.antigravity/extensions/anthropic.claude-code-2.1.34/resources/native-binary/claude
 
 # Mac'inizin mimarisini kontrol edin
 uname -m
 ```
 
-Beklenen ciktilar:
-- Apple Silicon Mac: `uname -m` → `arm64`, binary → `Mach-O 64-bit executable arm64`
-- Intel Mac: `uname -m` → `x86_64`, binary → `Mach-O 64-bit executable x86_64`
+Beklenen ciktilar (macOS):
+- Apple Silicon: `Mach-O 64-bit executable arm64`
+- Intel: `Mach-O 64-bit executable x86_64`
 
-Eger bunlar uyusmuyorsa, sorun budur.
+Eger ciktida `ELF` goruyorsaniz, yanlis platform binary'si yuklenmistir.
 
 #### b) Execute Izni Eksik
 
